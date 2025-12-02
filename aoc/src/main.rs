@@ -32,9 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .read_to_string()?;
 
     // Assume all write paths are relative to the workspace root.
-    dir.push("input");
-    fs::create_dir(&dir)?;
-    dir.push("1.txt");
+    dir.push("input.txt");
     fs::write(dir, input)?;
     Ok(())
 }

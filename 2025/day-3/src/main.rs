@@ -2,6 +2,7 @@ use std::{
     error::Error,
     fs::File,
     io::{BufRead, BufReader},
+    time::Instant,
 };
 
 // Input: lines of digits like 531254136523
@@ -9,15 +10,27 @@ use std::{
 // e.g. for the given input, the highest 2 digit number is 65
 // Output: Sum of the highest 2 digit numbers that can be made in each row of the input.
 fn main() -> Result<(), Box<dyn Error>> {
+    let part_1_start = Instant::now();
     let reader = BufReader::new(File::open("./2025/day-3/input.txt")?);
     let input = reader.lines().map_while(Result::ok);
     let part_1 = part_1(input);
+    let part_1_end = Instant::now();
     println!("Part 1: Sum is {part_1}");
+    println!(
+        "Part 1 took {}s.",
+        (part_1_end - part_1_start).as_secs_f64()
+    );
 
+    let part_2_start = Instant::now();
     let reader = BufReader::new(File::open("./2025/day-3/input.txt")?);
     let input = reader.lines().map_while(Result::ok);
     let part_2 = part_2(input);
+    let part_2_end = Instant::now();
     println!("Part 2: Sum is {part_2}");
+    println!(
+        "Part 2 took {}s.",
+        (part_2_end - part_2_start).as_secs_f64()
+    );
     Ok(())
 }
 

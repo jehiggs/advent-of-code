@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn solve(rotation_func: impl Fn(&mut Counter, &Rotation)) -> Result<usize, Box<dyn Error>> {
-    let reader = io::BufReader::new(fs::File::open("./2025/day-1/input/1.txt")?);
+    let reader = io::BufReader::new(fs::File::open("./2025/day-1/input.txt")?);
     let result = reader
         .lines()
         .map(|line| match line {

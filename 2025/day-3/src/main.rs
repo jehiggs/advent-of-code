@@ -22,9 +22,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let part_2_start = Instant::now();
-    let reader = BufReader::new(File::open("./2025/day-3/input.txt")?);
-    let input = reader.lines().map_while(Result::ok);
-    let part_2 = part_2(input);
+    let part_2_reader = BufReader::new(File::open("./2025/day-3/input.txt")?);
+    let part_2_input = part_2_reader.lines().map_while(Result::ok);
+    let part_2 = part_2(part_2_input);
     let part_2_end = Instant::now();
     println!("Part 2: Sum is {part_2}");
     println!(
@@ -42,14 +42,15 @@ fn part_2<T: AsRef<str>>(input: impl Iterator<Item = T>) -> usize {
     solve(input, 12)
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn solve<T: AsRef<str>>(input: impl Iterator<Item = T>, length: usize) -> usize {
     input.fold(0, |acc, item| {
         let mut result = 0;
-        for i in 0..item.as_ref().len() - length + 1 {
+        for i in 0..=item.as_ref().len() - length {
             let value = &item.as_ref()[i..i + length]
                 .parse::<usize>()
                 .expect("Should be a number");
-            for j in (1..length + 1).rev() {
+            for j in (1..=length).rev() {
                 let current = result % 10usize.pow(j as u32);
                 let cur_value = value % 10usize.pow(j as u32);
                 if cur_value > current {
@@ -73,7 +74,7 @@ mod tests {
         811111111111119
         234234234234278
         818181911112111";
-        let result = part_1(sample.split('\n').map(|item| item.trim_start()));
+        let result = part_1(sample.split('\n').map(str::trim_start));
         assert_eq!(357, result);
     }
 
@@ -83,7 +84,7 @@ mod tests {
         811111111111119
         234234234234278
         818181911112111";
-        let result = part_2(sample.split('\n').map(|item| item.trim_start()));
+        let result = part_2(sample.split('\n').map(str::trim_start));
         assert_eq!(3_121_910_778_619, result);
     }
 }

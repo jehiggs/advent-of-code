@@ -5,7 +5,6 @@ const INPUT: &str = "./2025/day-4/input.txt";
 
 fn main() -> Result<(), Box<dyn Error>> {
     runner::run("Part 1", INPUT, part_1)?;
-
     runner::run("Part 2", INPUT, part_2)?;
     Ok(())
 }

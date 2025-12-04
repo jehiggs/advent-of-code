@@ -1,37 +1,17 @@
+use aoc_lib::runner;
 use std::error::Error;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::time::Instant;
 
 const INPUT: &str = "./2025/day-4/input.txt";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let part_1_start = Instant::now();
-    let reader = BufReader::new(File::open(INPUT)?);
-    let input = reader.lines().map_while(Result::ok);
-    let part_1 = part_1(input);
-    let part_1_end = Instant::now();
-    println!("Part 1: Sum is {part_1}");
-    println!(
-        "Part 1 took {}s.",
-        (part_1_end - part_1_start).as_secs_f64()
-    );
+    runner::run("Part 1", INPUT, part_1)?;
 
-    let part_2_start = Instant::now();
-    let part_2_reader = BufReader::new(File::open(INPUT)?);
-    let part_2_input = part_2_reader.lines().map_while(Result::ok);
-    let part_2 = part_2(part_2_input);
-    let part_2_end = Instant::now();
-    println!("Part 2: Sum is {part_2}");
-    println!(
-        "Part 2 took {}s.",
-        (part_2_end - part_2_start).as_secs_f64()
-    );
+    runner::run("Part 2", INPUT, part_2)?;
     Ok(())
 }
 
-fn part_1<I: Iterator<Item = impl AsRef<str>>>(input: I) -> usize {
-    let grid = parse(input);
+fn part_1(input: &str) -> usize {
+    let grid = parse(input.split('\n'));
     let row_len = grid.len();
     let column_len = grid[0].len();
 
@@ -46,8 +26,8 @@ fn part_1<I: Iterator<Item = impl AsRef<str>>>(input: I) -> usize {
     count
 }
 
-fn part_2<I: Iterator<Item = impl AsRef<str>>>(input: I) -> usize {
-    let mut grid = parse(input);
+fn part_2(input: &str) -> usize {
+    let mut grid = parse(input.split('\n'));
     let row_len = grid.len();
     let column_len = grid[0].len();
 
@@ -120,13 +100,13 @@ mod tests {
 
     #[test]
     fn verify_part_1() {
-        let result = part_1(SAMPLE.split('\n'));
+        let result = part_1(SAMPLE);
         assert_eq!(13, result);
     }
 
     #[test]
     fn verify_part_2() {
-        let result = part_2(SAMPLE.split('\n'));
+        let result = part_2(SAMPLE);
         assert_eq!(43, result);
     }
 }

@@ -1,47 +1,36 @@
+use aoc_lib::runner;
 use std::cmp;
 use std::collections::HashSet;
 use std::error::Error;
-use std::fmt::Display;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::time;
+
+const INPUT: &str = "./2025/day-2/input.txt";
 
 // Solves 2025 day 2 by generating candidate invalid IDs and summing them.
 fn main() -> Result<(), Box<dyn Error>> {
-    let reader = BufReader::new(File::open("./2025/day-2/input.txt")?);
-    for line in reader.lines().map_while(Result::ok) {
-        let part_1_start = time::Instant::now();
-        let result = line
+    runner::run("Part 1", INPUT, |input| {
+        input
+            .trim()
             .split(',')
-            .try_fold(0, |acc, value| part_1(value).map(|result| acc + result))?;
-        let part_1_end = time::Instant::now();
-        println!("Part 1: The sum of invalid IDs is {result}");
-        println!("Part 1 took {}s", (part_1_end - part_1_start).as_secs_f64());
-    }
+            .fold(0, |acc, value| part_1(value) + acc)
+    })?;
 
-    let part_2_reader = BufReader::new(File::open("./2025/day-2/input.txt")?);
-    for line in part_2_reader.lines().map_while(Result::ok) {
-        let part_2_start = time::Instant::now();
-        let result = line
+    runner::run("Part 2", INPUT, |input| {
+        input
+            .trim()
             .split(',')
-            .try_fold(0, |acc, value| part_2(value).map(|result| acc + result))?;
-        let part_2_end = time::Instant::now();
-        println!("Part 2: The sum of invalid IDs is {result}");
-        println!("Part 2 took {}s", (part_2_end - part_2_start).as_secs_f64());
-    }
+            .fold(0, |acc, value| part_2(value) + acc)
+    })?;
     Ok(())
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn part_1(string: &str) -> Result<usize, Box<dyn Error>> {
-    let (lower_str, upper_str) = string
-        .split_once('-')
-        .ok_or_else(|| error("Range was not provided in a valid format"))?;
+fn part_1(string: &str) -> usize {
+    let (lower_str, upper_str) = string.split_once('-').expect("Should be separated by '-'");
     let lower = if lower_str.len() % 2 == 0 {
         let mid = lower_str.len() / 2;
         let (first, second) = lower_str.split_at(mid);
-        let bound = first.parse::<usize>()?;
-        let part = second.parse::<usize>()?;
+        let bound = first.parse::<usize>().expect("Should be an integer");
+        let part = second.parse::<usize>().expect("Should be an integer");
         if bound < part { bound + 1 } else { bound }
     } else {
         let power = lower_str.len() / 2;
@@ -51,8 +40,8 @@ fn part_1(string: &str) -> Result<usize, Box<dyn Error>> {
     let upper = if upper_str.len() % 2 == 0 {
         let mid = upper_str.len() / 2;
         let (first, second) = upper_str.split_at(mid);
-        let bound = first.parse::<usize>()?;
-        let part = second.parse::<usize>()?;
+        let bound = first.parse::<usize>().expect("Should be an integer");
+        let part = second.parse::<usize>().expect("Should be an integer");
         if bound > part { bound } else { bound + 1 }
     } else {
         let power = upper_str.len() / 2;
@@ -60,27 +49,25 @@ fn part_1(string: &str) -> Result<usize, Box<dyn Error>> {
     };
 
     if upper <= lower {
-        Ok(0)
+        0
     } else {
-        Ok((lower..upper).fold(0, |acc, next| {
+        (lower..upper).fold(0, |acc, next| {
             acc + 10usize.pow(next.ilog10() + 1) * next + next
-        }))
+        })
     }
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn part_2(range: &str) -> Result<usize, Box<dyn Error>> {
-    let (lower_str, upper_str) = range
-        .split_once('-')
-        .ok_or_else(|| error("Range was not provided in a valid format"))?;
+fn part_2(range: &str) -> usize {
+    let (lower_str, upper_str) = range.split_once('-').expect("Should be separated by '-'");
     let min_len = cmp::max(lower_str.len(), 2);
     let max_len = upper_str.len();
     if max_len == 1 {
-        return Ok(0);
+        return 0;
     }
     let mut result = 0;
-    let minimum = lower_str.parse::<usize>()?;
-    let maximum = upper_str.parse::<usize>()?;
+    let minimum = lower_str.parse::<usize>().expect("Should be an integer");
+    let maximum = upper_str.parse::<usize>().expect("Should be an integer");
     let mut ids = HashSet::new();
     // Generate numbers of lengths between min and max
     for length in min_len..=max_len {
@@ -101,46 +88,24 @@ fn part_2(range: &str) -> Result<usize, Box<dyn Error>> {
             }
         }
     }
-    Ok(result)
-}
-
-#[derive(Debug)]
-struct RangeError {
-    reason: &'static str,
-}
-
-impl Display for RangeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.reason)
-    }
-}
-
-impl Error for RangeError {}
-
-fn error(msg: &'static str) -> Box<dyn Error> {
-    Box::new(RangeError { reason: msg })
+    result
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::part_1;
-    use crate::part_2;
+    use super::*;
+
+    const SAMPLE: &str = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
 
     #[test]
     fn verify_part_1() {
-        let input = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
-        let result = input
-            .split(',')
-            .fold(0, |acc, value| part_1(value).expect("Input is valid") + acc);
+        let result = SAMPLE.split(',').fold(0, |acc, value| part_1(value) + acc);
         assert_eq!(1_227_775_554, result);
     }
 
     #[test]
     fn verify_part_2() {
-        let input = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
-        let result = input
-            .split(',')
-            .fold(0, |acc, value| part_2(value).expect("Input is valid") + acc);
+        let result = SAMPLE.split(',').fold(0, |acc, value| part_2(value) + acc);
         assert_eq!(4_174_379_265, result);
     }
 }

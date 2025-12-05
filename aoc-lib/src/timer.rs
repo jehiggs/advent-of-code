@@ -78,7 +78,7 @@ impl Display for Time {
         match self {
             Time::Seconds(seconds) => write!(f, "{seconds:.3}s"),
             Time::Millis(millis) => write!(f, "{millis}ms"),
-            Time::Micros(micros) => write!(f, "{micros}us"),
+            Time::Micros(micros) => write!(f, "{micros}µs"),
             Time::Nanos(nanos) => write!(f, "{nanos}ns"),
         }
     }
@@ -110,7 +110,7 @@ mod tests {
         let nanos = Duration::new(0, 789);
         assert_eq!("2.123s", format!("{}", Time::from(seconds)));
         assert_eq!("123ms", format!("{}", Time::from(millis)));
-        assert_eq!("456us", format!("{}", Time::from(micros)));
+        assert_eq!("456µs", format!("{}", Time::from(micros)));
         assert_eq!("789ns", format!("{}", Time::from(nanos)));
     }
 }

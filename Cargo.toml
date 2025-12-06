@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["2024/day-1", "2024/day-2","2025/day-1", "2025/day-2", "2025/day-3", "2025/day-4", "2025/day-5","aoc", "aoc-lib"]
+members = ["2024/day-1", "2024/day-2","2025/day-1", "2025/day-2", "2025/day-3", "2025/day-4", "2025/day-5", "2025/day-6","aoc", "aoc-lib"]
 
 [workspace.dependencies]
 aoc-lib = { path = "aoc-lib" }

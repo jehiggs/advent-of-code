@@ -1,6 +1,5 @@
 use aoc_lib::runner;
 use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
 const INPUT: &str = "./2025/day-8/input.txt";
@@ -16,18 +15,7 @@ fn part_1(input: &str) -> usize {
 }
 
 fn part_2(input: &str) -> usize {
-    let vectors: Vec<_> = input
-        .split('\n')
-        .map(|line| {
-            let (x, rest) = line.split_once(',').expect("Comma separated digits");
-            let (y, z) = rest.split_once(',').expect("Comma separated digits");
-            Vec3::new(
-                x.parse().expect("Number"),
-                y.parse().expect("Number"),
-                z.parse().expect("Number"),
-            )
-        })
-        .collect();
+    let vectors = parse_vectors(input);
     vectors
         .iter()
         .map(|vector| {
@@ -45,7 +33,29 @@ fn part_2(input: &str) -> usize {
 }
 
 fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
-    let vectors: Vec<_> = input
+    let vectors = parse_vectors(input);
+    let mut connections: Vec<_> = vectors
+        .iter()
+        .enumerate()
+        .flat_map(|(i, vector)| {
+            vectors[i + 1..]
+                .iter()
+                .enumerate()
+                .map(move |(j, conn)| (i, j + i + 1, vector.diff(conn)))
+        })
+        .collect();
+    connections.sort_unstable_by(|(_, _, a), (_, _, b)| a.total_cmp(b));
+    let mut set = DisjointSet::new(vectors.len());
+    for connection in connections.iter().take(num_connections) {
+        set.union(connection.0, connection.1);
+    }
+    let mut sizes = set.sizes();
+    sizes.sort_unstable_by_key(|num| Reverse(*num));
+    sizes.iter().take(3).product()
+}
+
+fn parse_vectors(input: &str) -> Vec<Vec3> {
+    input
         .split('\n')
         .map(|line| {
             let (x, rest) = line.split_once(',').expect("Comma separated digits");
@@ -56,56 +66,7 @@ fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
                 z.parse().expect("Number"),
             )
         })
-        .collect();
-    let mut connections: Vec<(usize, usize, f64)> = Vec::with_capacity(num_connections + 1);
-    for (i, vector) in vectors.iter().enumerate() {
-        for (j, conn) in vectors[i + 1..].iter().enumerate() {
-            let len = vector.diff(conn);
-            connections.push((i, j + i + 1, len));
-            connections.sort_unstable_by(|(_, _, a), (_, _, b)| a.total_cmp(b));
-            if connections.len() > num_connections {
-                connections.pop();
-            }
-        }
-    }
-    let mut graphs: HashMap<usize, Vec<usize>> = HashMap::with_capacity(num_connections);
-    for conn in connections {
-        if let Some(val) = graphs.get_mut(&conn.0) {
-            val.push(conn.1);
-        } else {
-            graphs.insert(conn.0, Vec::from([conn.1]));
-        }
-
-        if let Some(val) = graphs.get_mut(&conn.1) {
-            val.push(conn.0);
-        } else {
-            graphs.insert(conn.1, Vec::from([conn.0]));
-        }
-    }
-
-    let mut circuit_sizes = Vec::new();
-    let mut visited = HashSet::new();
-    for key in graphs.keys() {
-        if !visited.contains(key) {
-            let mut circuit_size = 0;
-            let mut queue = Vec::from([*key]);
-            visited.insert(key);
-            while let Some(k) = queue.pop() {
-                circuit_size += 1;
-                if let Some(val) = graphs.get(&k) {
-                    for next_k in val {
-                        if !visited.contains(next_k) {
-                            queue.push(*next_k);
-                            visited.insert(next_k);
-                        }
-                    }
-                }
-            }
-            circuit_sizes.push(circuit_size);
-        }
-    }
-    circuit_sizes.sort_unstable_by_key(|num| Reverse(*num));
-    circuit_sizes.iter().take(3).product()
+        .collect()
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -126,6 +87,52 @@ impl Vec3 {
             + self.y.abs_diff(other.y).pow(2)
             + self.z.abs_diff(other.z).pow(2);
         (total as f64).sqrt()
+    }
+}
+
+#[derive(Debug)]
+struct DisjointSet {
+    parents: Vec<(usize, usize)>,
+}
+
+impl DisjointSet {
+    fn new(size: usize) -> Self {
+        DisjointSet {
+            parents: (0..size).map(|i| (i, 1)).collect(),
+        }
+    }
+
+    fn find(&mut self, item: usize) -> usize {
+        if self.parents[item].0 != item {
+            self.parents[item].0 = self.find(self.parents[item].0);
+            self.parents[item].1 = 0;
+        }
+        self.parents[item].0
+    }
+
+    fn union(&mut self, a: usize, b: usize) -> bool {
+        let (root_a, root_b) = (self.find(a), self.find(b));
+        if root_a == root_b {
+            return false;
+        }
+
+        let (new_root, merged) = if self.parents[root_a].1 > self.parents[root_b].1 {
+            (root_a, root_b)
+        } else {
+            (root_b, root_a)
+        };
+
+        self.parents[merged].0 = self.parents[new_root].0;
+        self.parents[new_root].1 += self.parents[merged].1;
+        true
+    }
+
+    fn sizes(&self) -> Vec<usize> {
+        self.parents
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (root, size))| (i == *root && *size != 0).then_some(*size))
+            .collect()
     }
 }
 

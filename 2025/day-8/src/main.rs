@@ -22,14 +22,14 @@ fn part_2(input: &str) -> usize {
             let closest = vectors
                 .iter()
                 .filter(|conn| vector != *conn)
-                .min_by_key(|v| vector.diff(v))
+                .min_by_key(|v| vector.distance_squared(v))
                 .expect("Should be an element");
-            let distance = vector.diff(closest);
+            let distance = vector.distance_squared(closest);
             (closest.x * vector.x, distance)
         })
         .max_by_key(|(_, a)| *a)
-        .map(|(x, _)| x)
         .expect("Should be an element")
+        .0
 }
 
 fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
@@ -41,7 +41,7 @@ fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
             vectors[i + 1..]
                 .iter()
                 .enumerate()
-                .map(move |(j, conn)| (i, j + i + 1, vector.diff(conn)))
+                .map(move |(j, conn)| (i, j + i + 1, vector.distance_squared(conn)))
         })
         .collect();
     connections.sort_unstable_by_key(|(_, _, a)| *a);
@@ -49,7 +49,7 @@ fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
     for connection in connections.iter().take(num_connections) {
         set.union(connection.0, connection.1);
     }
-    let mut sizes = set.sizes();
+    let mut sizes: Vec<usize> = set.sizes().collect();
     sizes.sort_unstable_by_key(|num| Reverse(*num));
     sizes.iter().take(3).product()
 }
@@ -76,13 +76,12 @@ struct Vec3 {
     z: usize,
 }
 
-#[allow(clippy::cast_precision_loss)]
 impl Vec3 {
     fn new(x: usize, y: usize, z: usize) -> Self {
         Vec3 { x, y, z }
     }
 
-    fn diff(&self, other: &Vec3) -> usize {
+    fn distance_squared(&self, other: &Vec3) -> usize {
         self.x.abs_diff(other.x).pow(2)
             + self.y.abs_diff(other.y).pow(2)
             + self.z.abs_diff(other.z).pow(2)
@@ -92,19 +91,20 @@ impl Vec3 {
 #[derive(Debug)]
 struct DisjointSet {
     parents: Vec<(usize, usize)>,
+    num_roots: usize,
 }
 
 impl DisjointSet {
     fn new(size: usize) -> Self {
         DisjointSet {
             parents: (0..size).map(|i| (i, 1)).collect(),
+            num_roots: size,
         }
     }
 
     fn find(&mut self, item: usize) -> usize {
         if self.parents[item].0 != item {
             self.parents[item].0 = self.find(self.parents[item].0);
-            self.parents[item].1 = 0;
         }
         self.parents[item].0
     }
@@ -123,15 +123,15 @@ impl DisjointSet {
 
         self.parents[merged].0 = self.parents[new_root].0;
         self.parents[new_root].1 += self.parents[merged].1;
+        self.num_roots -= 1;
         true
     }
 
-    fn sizes(&self) -> Vec<usize> {
+    fn sizes(&self) -> impl Iterator<Item = usize> {
         self.parents
             .iter()
             .enumerate()
-            .filter_map(|(i, (root, size))| (i == *root && *size != 0).then_some(*size))
-            .collect()
+            .filter_map(|(i, (root, size))| (i == *root).then_some(*size))
     }
 }
 

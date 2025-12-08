@@ -22,12 +22,12 @@ fn part_2(input: &str) -> usize {
             let closest = vectors
                 .iter()
                 .filter(|conn| vector != *conn)
-                .min_by(|a, b| f64::total_cmp(&vector.diff(a), &vector.diff(b)))
+                .min_by_key(|v| vector.diff(v))
                 .expect("Should be an element");
             let distance = vector.diff(closest);
             (closest.x * vector.x, distance)
         })
-        .max_by(|(_, a), (_, b)| a.total_cmp(b))
+        .max_by_key(|(_, a)| *a)
         .map(|(x, _)| x)
         .expect("Should be an element")
 }
@@ -44,7 +44,7 @@ fn part_1_parameterized(input: &str, num_connections: usize) -> usize {
                 .map(move |(j, conn)| (i, j + i + 1, vector.diff(conn)))
         })
         .collect();
-    connections.sort_unstable_by(|(_, _, a), (_, _, b)| a.total_cmp(b));
+    connections.sort_unstable_by_key(|(_, _, a)| *a);
     let mut set = DisjointSet::new(vectors.len());
     for connection in connections.iter().take(num_connections) {
         set.union(connection.0, connection.1);
@@ -82,11 +82,10 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    fn diff(&self, other: &Vec3) -> f64 {
-        let total = self.x.abs_diff(other.x).pow(2)
+    fn diff(&self, other: &Vec3) -> usize {
+        self.x.abs_diff(other.x).pow(2)
             + self.y.abs_diff(other.y).pow(2)
-            + self.z.abs_diff(other.z).pow(2);
-        (total as f64).sqrt()
+            + self.z.abs_diff(other.z).pow(2)
     }
 }
 

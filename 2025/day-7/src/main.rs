@@ -80,7 +80,7 @@ mod tests {
 
     #[test]
     fn verify_part_1() {
-        let result = part_1_redux(SAMPLE);
+        let result = part_1(SAMPLE);
         assert_eq!(21, result);
     }
 

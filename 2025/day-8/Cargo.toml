@@ -1,0 +1,10 @@
+[package]
+name = "day-8-2025"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aoc-lib = { workspace = true }
+
+[lints]
+workspace = true

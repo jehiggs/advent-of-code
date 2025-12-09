@@ -85,7 +85,7 @@ struct Line {
 
 impl Line {
     fn new(start: Point, end: Point) -> Self {
-        let x_aligned = start.y == end.y;
+        let x_aligned = (start.y - end.y).abs() < 0.25;
         Line {
             start,
             end,
@@ -98,9 +98,11 @@ impl Line {
             return true;
         }
         if self.x_aligned {
-            point.y == self.start.y && ((self.start.x <= point.x) ^ (self.end.x <= point.x))
+            (point.y - self.start.y).abs() < 0.25
+                && ((self.start.x <= point.x) ^ (self.end.x <= point.x))
         } else {
-            point.x == self.start.x && ((self.start.y <= point.y) ^ (self.end.y <= point.y))
+            (point.x - self.start.x).abs() < 0.25
+                && ((self.start.y <= point.y) ^ (self.end.y <= point.y))
         }
     }
 
@@ -170,6 +172,7 @@ impl Rect {
             .any(|line| perimeter.iter().any(|l| l.intersects(line)))
     }
 
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn area(&self) -> usize {
         let max_x = self
             .points

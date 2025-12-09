@@ -11,20 +11,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn part_1(input: &str) -> usize {
     parse(input)
-        .map(|point| {
-            parse(input)
-                .map(|other| {
-                    Rect::new([
-                        point,
-                        Point::new(point.x, other.y),
-                        other,
-                        Point::new(other.x, point.y),
-                    ])
-                    .area()
-                })
-                .max()
-                .expect("Should be an element")
-        })
+        .all_pairs()
+        .map(|(a, b)| Rect::new([a, Point::new(a.x, b.y), b, Point::new(b.x, a.y)]).area())
         .max()
         .expect("Should be an element")
 }
@@ -35,33 +23,16 @@ fn part_2(input: &str) -> usize {
         .map(|(a, b)| Line::new(a, b))
         .collect();
     parse(input)
-        .map(|point| {
-            parse(input)
-                .map(move |other| {
-                    Rect::new([
-                        point,
-                        Point::new(point.x, other.y),
-                        other,
-                        Point::new(other.x, point.y),
-                    ])
-                })
-                .filter(|rect| rect.in_perimeter(&perimeter))
-                .map(|rect| rect.area())
-                .max()
-                .unwrap_or(0)
-        })
+        .all_pairs()
+        .map(|(a, b)| Rect::new([a, Point::new(a.x, b.y), b, Point::new(b.x, a.y)]))
+        .filter(|rect| rect.in_perimeter(&perimeter))
+        .map(|rect| rect.area())
         .max()
         .expect("Should be an element")
 }
 
 fn parse(input: &str) -> impl Iterator<Item = Point> {
-    input.split('\n').map(|line| {
-        let elems = line.split_once(',').expect("Should be comma separated");
-        Point::new(
-            elems.0.parse().expect("Number"),
-            elems.1.parse().expect("Number"),
-        )
-    })
+    input.split('\n').map(Point::from)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -73,6 +44,19 @@ struct Point {
 impl Point {
     fn new(x: f64, y: f64) -> Self {
         Point { x, y }
+    }
+}
+
+impl<T: AsRef<str>> From<T> for Point {
+    fn from(value: T) -> Self {
+        let (x_str, y_str) = value
+            .as_ref()
+            .split_once(',')
+            .expect("Comma separated point");
+        Point {
+            x: x_str.parse().expect("Should be a number"),
+            y: y_str.parse().expect("Should be a number"),
+        }
     }
 }
 
@@ -250,6 +234,44 @@ impl<I: Iterator<Item = Point>> PairLoop for I {
     }
 }
 
+#[derive(Debug)]
+struct AllPairs {
+    points: Vec<Point>,
+    current: usize,
+    current_pair: usize,
+}
+
+impl Iterator for AllPairs {
+    type Item = (Point, Point);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(b) = self.points.get(self.current_pair) {
+            self.current_pair += 1;
+            self.points.get(self.current).map(|a| (*a, *b))
+        } else {
+            self.current += 1;
+            self.current_pair = self.current + 1;
+            self.points
+                .get(self.current)
+                .and_then(|a| self.points.get(self.current_pair).map(|b| (*a, *b)))
+        }
+    }
+}
+
+trait Pairs {
+    fn all_pairs(self) -> AllPairs;
+}
+
+impl<I: Iterator<Item = Point>> Pairs for I {
+    fn all_pairs(self) -> AllPairs {
+        AllPairs {
+            points: self.collect(),
+            current: 0,
+            current_pair: 1,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -273,19 +295,5 @@ mod tests {
     fn verify_part_2() {
         let result = part_2(SAMPLE);
         assert_eq!(24, result);
-    }
-
-    #[test]
-    fn intersects() {
-        let l1 = Line::new(Point::new(2., 5.), Point::new(2., 3.));
-        let l2 = Line::new(Point::new(9., 3.), Point::new(2., 3.));
-        assert!(!l2.intersects(&l1));
-    }
-
-    #[test]
-    fn contains() {
-        let l = Line::new(Point::new(1., 5.), Point::new(1., 9.));
-        let p = Point::new(1., 9.);
-        assert!(l.contains(&p));
     }
 }

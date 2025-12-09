@@ -1,5 +1,5 @@
 use aoc_lib::runner;
-use std::error::Error;
+use std::{cmp::Reverse, error::Error};
 
 const INPUT: &str = "./2025/day-9/input.txt";
 
@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn part_1(input: &str) -> usize {
     parse(input)
         .all_pairs()
-        .map(|(a, b)| Rect::new([a, Point::new(a.x, b.y), b, Point::new(b.x, a.y)]).area())
+        .map(|(a, b)| Rect::new(a, b).area)
         .max()
         .expect("Should be an element")
 }
@@ -22,13 +22,15 @@ fn part_2(input: &str) -> usize {
         .loop_pairs()
         .map(|(a, b)| Line::new(a, b))
         .collect();
-    parse(input)
+    let mut rectangles: Vec<_> = parse(input)
         .all_pairs()
-        .map(|(a, b)| Rect::new([a, Point::new(a.x, b.y), b, Point::new(b.x, a.y)]))
-        .filter(|rect| rect.in_perimeter(&perimeter))
-        .map(|rect| rect.area())
-        .max()
-        .expect("Should be an element")
+        .map(|(a, b)| Rect::new(a, b))
+        .collect();
+    rectangles.sort_unstable_by_key(|rect| Reverse(rect.area));
+    rectangles
+        .iter()
+        .find(|r| r.in_perimeter(&perimeter))
+        .map_or_else(|| 0, |r| r.area)
 }
 
 fn parse(input: &str) -> impl Iterator<Item = Point> {
@@ -123,17 +125,30 @@ impl Line {
 struct Rect {
     points: [Point; 4],
     lines: [Line; 4],
+    area: usize,
 }
 
 impl Rect {
-    fn new(points: [Point; 4]) -> Self {
+    fn new(corner_a: Point, corner_b: Point) -> Self {
+        let area = ((corner_a.x - corner_b.x).abs() + 1.) * ((corner_a.y - corner_b.y).abs() + 1.);
+        let points = [
+            corner_a,
+            Point::new(corner_a.x, corner_b.y),
+            corner_b,
+            Point::new(corner_b.x, corner_a.y),
+        ];
         let lines = [
             Line::new(points[0], points[1]),
             Line::new(points[1], points[2]),
             Line::new(points[2], points[3]),
             Line::new(points[3], points[0]),
         ];
-        Rect { points, lines }
+        #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+        Rect {
+            points,
+            lines,
+            area: area as usize,
+        }
     }
 
     fn in_perimeter(&self, perimeter: &[Line]) -> bool {
@@ -154,35 +169,6 @@ impl Rect {
             .lines
             .iter()
             .any(|line| perimeter.iter().any(|l| l.intersects(line)))
-    }
-
-    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
-    fn area(&self) -> usize {
-        let max_x = self
-            .points
-            .iter()
-            .map(|p| p.x as usize)
-            .max_by_key(|p| *p)
-            .expect("");
-        let min_x = self
-            .points
-            .iter()
-            .map(|p| p.x as usize)
-            .min_by_key(|p| *p)
-            .expect("");
-        let max_y = self
-            .points
-            .iter()
-            .map(|p| p.y as usize)
-            .max_by_key(|p| *p)
-            .expect("");
-        let min_y = self
-            .points
-            .iter()
-            .map(|p| p.y as usize)
-            .min_by_key(|p| *p)
-            .expect("");
-        (max_x - min_x + 1) * (max_y - min_y + 1)
     }
 }
 

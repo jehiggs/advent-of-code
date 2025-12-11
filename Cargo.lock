@@ -162,6 +162,13 @@ name = "day-1-2025"
 version = "0.1.0"
 
 [[package]]
+name = "day-10-2025"
+version = "0.1.0"
+dependencies = [
+ "aoc-lib",
+]
+
+[[package]]
 name = "day-2-2024"
 version = "0.1.0"
 

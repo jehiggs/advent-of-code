@@ -1,0 +1,10 @@
+[package]
+name = "day-10-2025"
+version = "0.1.0"
+edition = "2024"
+
+[lints]
+workspace = true
+
+[dependencies.aoc-lib]
+workspace = true

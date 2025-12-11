@@ -12,19 +12,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn part_1(input: &str) -> usize {
     let graph = parse(input);
-    route_count(&graph, "you")
+    let mut visited = HashMap::new();
+    route_count(&graph, &mut visited, "you")
 }
 
-fn route_count(graph: &HashMap<String, Vec<String>>, key: &str) -> usize {
+fn route_count(
+    graph: &HashMap<String, Vec<String>>,
+    visited: &mut HashMap<String, usize>,
+    key: &str,
+) -> usize {
     let mut count = 0;
     let next = &graph[key];
     for next_key in next {
         if next_key == "out" {
             count += 1;
+        } else if let Some(c) = visited.get(next_key) {
+            count += c;
         } else {
-            count += route_count(graph, next_key);
+            count += route_count(graph, visited, next_key);
         }
     }
+    visited.insert(key.to_owned(), count);
     count
 }
 

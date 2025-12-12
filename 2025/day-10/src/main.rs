@@ -1,5 +1,5 @@
 use aoc_lib::runner;
-use std::{collections::HashSet, error::Error};
+use std::{collections::HashSet, error::Error, mem};
 
 const INPUT: &str = "./2025/day-10/input.txt";
 
@@ -86,6 +86,61 @@ impl Machine {
     }
 }
 
+#[derive(Debug)]
+struct Matrix {
+    data: Vec<Vec<f64>>,
+    rows: usize,
+    columns: usize,
+}
+
+impl Matrix {
+    fn new(data: Vec<Vec<f64>>) -> Self {
+        let rows = data.len();
+        // Augmented matrix, so ignore last element for columns during forward/backward substitution.
+        let columns = data[0].len() - 1;
+        Matrix {
+            data,
+            rows,
+            columns,
+        }
+    }
+    fn reduce(&mut self) {
+        let mut row = 0;
+        let mut column = 0;
+        // Forward substitution
+        while row < self.rows && column < self.columns {
+            let row_max = (row..self.rows)
+                .reduce(|i, j| {
+                    if self.data[i][column] > self.data[j][column] {
+                        i
+                    } else {
+                        j
+                    }
+                })
+                .expect("Should be an element");
+            if row_max > row {
+                let (a, b) = self.data.split_at_mut(row_max);
+                mem::swap(&mut a[row], &mut b[0]);
+            }
+            for r in row + 1..self.rows {
+                let scale = self.data[r][column] / self.data[row][column];
+                self.data[r][column] = 0.;
+                for c in column + 1..=self.columns {
+                    self.data[r][c] -= self.data[row][c] * scale;
+                }
+            }
+            row += 1;
+            column += 1;
+        }
+        // let position = min(row, column) - 1;
+        // row = position;
+        // column = position;
+        // while row >= 0 && column >= 0 {
+
+        // }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +159,18 @@ mod tests {
     fn verify_part_2() {
         let result = part_2(SAMPLE);
         assert_eq!(33, result);
+    }
+
+    #[test]
+    fn reduce() {
+        let mut m = Matrix::new(vec![
+            vec![0., 0., 0., 0., 1., 1., 3.],
+            vec![0., 1., 0., 0., 0., 1., 5.],
+            vec![0., 0., 1., 1., 1., 0., 4.],
+            vec![1., 1., 0., 1., 0., 0., 7.],
+            vec![1., 1., 1., 1., 1., 1., 10.],
+        ]);
+        m.reduce();
+        println!("{m:?}");
     }
 }

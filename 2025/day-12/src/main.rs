@@ -5,7 +5,6 @@ const INPUT: &str = "./2025/day-12/input.txt";
 
 fn main() -> Result<(), Box<dyn Error>> {
     runner::run("Part 1", INPUT, part_1)?;
-    runner::run("Part 2", INPUT, part_2)?;
     Ok(())
 }
 
@@ -41,10 +40,6 @@ fn part_1(input: &str) -> usize {
     }
 }
 
-fn part_2(input: &str) -> usize {
-    0
-}
-
 fn parse(input: &str) -> (Vec<Shape>, Vec<Grid>) {
     let (shape_str, grid_str) = input
         .rsplit_once("\n\n")
@@ -62,29 +57,17 @@ fn parse(input: &str) -> (Vec<Shape>, Vec<Grid>) {
 
 #[derive(Debug)]
 struct Shape {
-    shape: Vec<u64>,
     num_filled: u64,
 }
 
+#[allow(clippy::naive_bytecount)]
 impl<T: AsRef<str>> From<T> for Shape {
     fn from(value: T) -> Self {
         let mut num_filled = 0;
-        let shape = value
-            .as_ref()
-            .split('\n')
-            .map(|line| {
-                line.as_bytes()
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, b)| **b == b'#')
-                    .map(|(i, _)| {
-                        num_filled += 1;
-                        0b1 << i
-                    })
-                    .sum()
-            })
-            .collect();
-        Shape { shape, num_filled }
+        for line in value.as_ref().split('\n') {
+            num_filled += line.as_bytes().iter().filter(|b| **b == b'#').count() as u64;
+        }
+        Shape { num_filled }
     }
 }
 
@@ -93,7 +76,6 @@ struct Grid {
     rows: u64,
     columns: u64,
     size: u64,
-    data: Vec<u64>,
     pieces_to_fit: Vec<u64>,
 }
 
@@ -118,7 +100,6 @@ impl<T: AsRef<str>> From<T> for Grid {
             rows,
             columns,
             size: rows * columns,
-            data: vec![0; rows as usize],
             pieces_to_fit,
         }
     }
@@ -166,11 +147,5 @@ mod tests {
     fn verify_part_1() {
         let result = part_1(SAMPLE);
         assert_eq!(3, result);
-    }
-
-    #[test]
-    fn verify_part_2() {
-        let result = part_2(SAMPLE);
-        assert_eq!(0, result);
     }
 }

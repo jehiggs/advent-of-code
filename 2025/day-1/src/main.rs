@@ -1,32 +1,39 @@
+use aoc_lib::runner;
 use std::error::Error;
 use std::fmt::Display;
-use std::fs;
-use std::io;
-use std::io::BufRead;
+
+const INPUT: &str = "./2025/day-1/input.txt";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let part_1 = solve(Counter::apply_rotation_1)?;
-    println!("Part 1 result: {part_1}");
-    let part_2 = solve(Counter::apply_rotation_2)?;
-    println!("Part 2 result: {part_2}");
+    runner::run("Part 1", INPUT, part_1)?;
+    runner::run("Part 2", INPUT, part_2)?;
     Ok(())
 }
 
-fn solve(rotation_func: impl Fn(&mut Counter, &Rotation)) -> Result<usize, Box<dyn Error>> {
-    let reader = io::BufReader::new(fs::File::open("./2025/day-1/input.txt")?);
-    let result = reader
-        .lines()
-        .map(|line| match line {
-            Ok(string) => Rotation::from(&string),
-            Err(err) => Err(Box::new(err) as Box<dyn Error>),
+fn part_1(input: &str) -> usize {
+    input
+        .split('\n')
+        .map(|line| Rotation::from(line))
+        .fold(Counter::new(), |mut counter, rotation| {
+            if let Ok(r) = rotation {
+                counter.apply_rotation_1(&r);
+            }
+            counter
         })
-        .try_fold(Counter::new(), |mut value, rotation| {
-            rotation.map(|rot| {
-                rotation_func(&mut value, &rot);
-                value
-            })
-        })?;
-    Ok(result.zero_count)
+        .zero_count
+}
+
+fn part_2(input: &str) -> usize {
+    input
+        .split('\n')
+        .map(|line| Rotation::from(line))
+        .fold(Counter::new(), |mut counter, rotation| {
+            if let Ok(r) = rotation {
+                counter.apply_rotation_2(&r);
+            }
+            counter
+        })
+        .zero_count
 }
 
 #[derive(Debug)]
@@ -117,4 +124,32 @@ impl Error for RotationError {}
 
 fn error(msg: &'static str) -> Box<dyn Error> {
     Box::new(RotationError { reason: msg })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SAMPLE: &str = "L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82";
+
+    #[test]
+    fn verify_part_1() {
+        let result = part_1(SAMPLE);
+        assert_eq!(3, result);
+    }
+
+    #[test]
+    fn verify_part_2() {
+        let result = part_2(SAMPLE);
+        assert_eq!(6, result);
+    }
 }
